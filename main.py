@@ -17,7 +17,7 @@ static_files = {'/': 'static/index.html', '/static': './static'}
 sio = socketio.AsyncServer(cors_allowed_origins='*',async_mode='asgi')
 app = socketio.ASGIApp(sio,static_files=static_files)
 logging.basicConfig(level='INFO',
-                    # filename='logs.log',
+                    filename='logs.log',
                     format='%(filename)s:%(lineno)d #%(levelname)-8s'
                            '[%(asctime)s)] - %(name)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ async def connect(sid,environ):
 @sio.on('get_rooms')
 async def get_rooms(sid,data):
     rooms = ['lobby', 'general', 'random']
-    await sio.emit('rooms',to=sid,data={'text':f'{rooms}'})
+    await sio.emit('rooms',to=sid,data={'text':rooms})
 
 @sio.event
 async def join(sid,data):
@@ -61,12 +61,12 @@ async def join(sid,data):
     await sio.emit('move',to=sid,data={'room':f'{session["room"]}'})
 
 @sio.event
-async def leave(sid,data):
+async def leave(sid):
     session = await sio.get_session(sid=sid)
     await sio.leave_room(sid=sid,room=session['room'])
     session['room'] = "None"
     await sio.save_session(sid=sid,session=session)
-    await sio.emit('leave',to=sid,data={'text':'You left the room'})
+    await sio.emit('sio_leave',to=sid,data={'text':'You left the room'})
 
 @sio.event
 async def send_message(sid,data):
